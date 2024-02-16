@@ -5,6 +5,7 @@ import Header from "./header";
 import Footer from "./footer";
 import { WORDPRESS_SITE_URL_QUERY, allowedHandlers } from "@/lib/queries";
 import Script from "next/script";
+import DynamicStyleTag from "./style";
 
 const Layout = ({ children, pageSlug }) => {
   const [styles, setStyles] = useState([]);
@@ -50,7 +51,8 @@ const Layout = ({ children, pageSlug }) => {
 
   return (
     <>
-      {styles?.map(style => (
+    <DynamicStyleTag styles={styles} />
+      {/* {styles?.map(style => (
         <React.Fragment key={style.id}>
           {style.src && (
             <Head>
@@ -61,7 +63,7 @@ const Layout = ({ children, pageSlug }) => {
             </Head>
           )}
         </React.Fragment>
-      ))}
+      ))} */}
 
       {scripts?.map(script => (
         <React.Fragment key={script.id}>
@@ -71,21 +73,21 @@ const Layout = ({ children, pageSlug }) => {
           <Script key={script.id} src={script.src}></Script>
         </React.Fragment>
       ))}
-      <div className="hfeed site" id="page">
-        <Header pageSlug={pageSlug}/>
-        <div id="content" className="site-content">
-          <div className="ast-container">
-            <div id="primary" className="content-area primary">
-              <main id="main" className="site-main">
-                <article className="status-publish ast-article-single">
+      <body className="home blog ast-desktop ast-separate-container ast-two-container ast-no-sidebar astra-4.6.5 ast-inherit-site-logo-transparent ast-hfb-header">
+        <div className="hfeed site" id="page">
+          <Header pageSlug={pageSlug} />
+          <div id="content" className="site-content">
+            <div className="ast-container">
+              <div id="primary" className="content-area primary">
+                <main id="main" className="site-main">
                   {children}
-                </article>
-              </main>
+                </main>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <Footer />
+        <Footer />
+      </body>
     </>
   );
 }
