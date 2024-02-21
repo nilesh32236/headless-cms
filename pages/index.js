@@ -4,18 +4,39 @@ import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import Layout from "@/component/layout";
 import client from "@/lib/apollo-client";
-import { GET_POSTS } from "@/lib/queries";
+import { GET_ALL_POSTS_ID, GET_POSTS } from "@/lib/queries";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 const inter = Inter({ subsets: ["latin"] });
 
 function has_thumbnail(post) {
-  console.log(post);
   return post.featuredImage ? 'has-post-thumbnail' : '';
 }
-export default function Home({ posts }) {
-  console.log(posts.nodes);
+export default function Home({ initialPosts, totalPages, postDatabaseIDs }) {
+  const router = useRouter();
+
+  const [posts, setPosts] = useState(initialPosts);
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 10;
+  console.log(router?.query?.page);
+  const after = router?.query?.page > 1 ? btoa(`arrayconnection:${postDatabaseIDs.nodes[postsPerPage * (router?.query?.page - 1)]?.databaseId}`) : null;
+
+  console.log("endCursor: ", posts.pageInfo.endCursor);
+  useEffect(() => {
+    console.log("after ", after);
+    const fetchPosts = async () => {
+      const { data } = await client.query({
+        query: GET_POSTS,
+        variables: { first: postsPerPage, after }
+      });
+      setPosts(data.posts);
+    };
+
+    fetchPosts();
+    setCurrentPage(router.query.page || 1);
+  }, [router.query.page]);
   return (
     <>
       <div className="ast-row">
@@ -34,7 +55,7 @@ export default function Home({ posts }) {
                     )}
                   </React.Fragment>
                   <span className="ast-blog-single-element ast-taxonomy-container cat-links default">
-                    {post.categories.nodes.map(category => (
+                    {post?.categories?.nodes?.map(category => (
                       <Link href={'/post' + category.uri} key={category.id} rel="category tag">{category.name}</Link>
                     ))}
                   </span>
@@ -44,18 +65,18 @@ export default function Home({ posts }) {
                   <header className="entry-header ast-blog-single-element ast-blog-meta-container">
                     <div className="entry-meta">
                       <span className="posted-by vcard author" itemType="https://schema.org/Person" itemScope="itemscope" itemProp="author">
-                        <Link title="View all posts by admin" href={'/post' + post.author.node.uri} className="url fn n">
-                          <span className="author-name">{post.author.node.name} </span>
+                        <Link title="View all posts by admin" href={'/post' + post?.author?.node?.uri} className="url fn n">
+                          <span className="author-name">{post?.author?.node?.name} </span>
                         </Link>
                       </span>
-                       <span>/</span>
+                      <span>/</span>
                       <span className="posted-on">
                         <span className="published">{post.date}</span>
                       </span>
                     </div>
                   </header>
                   <div className="ast-excerpt-container ast-blog-single-element">
-                      <div dangerouslySetInnerHTML={{ __html: post.excerpt}}/>
+                    <div dangerouslySetInnerHTML={{ __html: post.excerpt }} />
                   </div>
                   <div className="entry-content clear"></div>
                 </div>
@@ -64,23 +85,48 @@ export default function Home({ posts }) {
           </article>
         ))}
       </div>
+      {Array.from({ length: totalPages }, (_, i) => (
+        <Link
+          key={i}
+          href={{ pathname: "/", query: { page: i + 1 } }}
+          onClick={() => setCurrentPage(i + 1)}
+          className={i + 1 === currentPage ? "active" : ""}
+        >
+          {i + 1}
+        </Link>
+      ))}
     </>
   );
 }
 
-export async function getStaticProps({ params }) {
+export async function getStaticProps() {
+  const postsPerPage = 10;
+
+  // Fetch all post database IDs
   const { data } = await client.query({
-    query: GET_POSTS
+    query: GET_ALL_POSTS_ID,
+    variables: { first: 10000 } // Fetching a large number of posts to ensure getting all IDs
   });
 
-  if (!data.posts) {
+  const totalPosts = data.posts.nodes.length;
+  const totalPages = Math.ceil(totalPosts / postsPerPage);
+
+  // const currentPage = params?.page ? parseInt(params.page, 10) : 1;
+  // const after = currentPage > 1 ? btoa(`arrayconnection:${postsPerPage * (currentPage - 1)}`) : null;
+
+  const { data: postData } = await client.query({
+    query: GET_POSTS,
+    variables: { first: postsPerPage }
+  });
+
+  if (!postData.posts) {
     return {
-      notFound: true
+      notFound: true,
     };
   }
 
   return {
-    props: { posts: data.posts },
+    props: { initialPosts: postData.posts, totalPages, postDatabaseIDs: data.posts },
     revalidate: 10,
-  }
+  };
 }
