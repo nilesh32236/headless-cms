@@ -7,6 +7,27 @@ import { WORDPRESS_SITE_URL_QUERY, allowedHandlers } from "@/lib/queries";
 import Script from "next/script";
 import DynamicStyleTag from "./style";
 
+const Body = ({ className }) => {
+  useEffect(() => {
+    // Split the class string into individual class names
+    const classNames = className.split(' ');
+
+    // Add each class name to the body element's classList
+    classNames.forEach(name => {
+      document.body.classList.add(name);
+    });
+
+    // Cleanup function to remove added classes when component unmounts
+    return () => {
+      classNames.forEach(name => {
+        document.body.classList.remove(name);
+      });
+    };
+  }, [className]); // Run effect whenever className prop changes
+
+  return null; // This component doesn't render anything visible
+};
+
 const Layout = ({ children, pageSlug }) => {
   const [styles, setStyles] = useState([]);
   const [scripts, setScripts] = useState([]);
@@ -51,7 +72,7 @@ const Layout = ({ children, pageSlug }) => {
 
   return (
     <>
-    <DynamicStyleTag styles={styles} />
+      <DynamicStyleTag styles={styles} />
       {/* {styles?.map(style => (
         <React.Fragment key={style.id}>
           {style.src && (
@@ -73,21 +94,20 @@ const Layout = ({ children, pageSlug }) => {
           <Script key={script.id} src={script.src}></Script>
         </React.Fragment>
       ))}
-      <body className="home blog ast-desktop ast-separate-container ast-two-container ast-no-sidebar astra-4.6.5 ast-inherit-site-logo-transparent ast-hfb-header">
-        <div className="hfeed site" id="page">
-          <Header pageSlug={pageSlug} />
-          <div id="content" className="site-content">
-            <div className="ast-container">
-              <div id="primary" className="content-area primary">
-                <main id="main" className="site-main">
-                  {children}
-                </main>
-              </div>
+      <Body className="home blog ast-desktop ast-separate-container ast-two-container ast-no-sidebar astra-4.6.5 ast-inherit-site-logo-transparent ast-hfb-header"></Body>
+      <div className="hfeed site" id="page">
+        <Header pageSlug={pageSlug} />
+        <div id="content" className="site-content">
+          <div className="ast-container">
+            <div id="primary" className="content-area primary">
+              <main id="main" className="site-main">
+                {children}
+              </main>
             </div>
           </div>
         </div>
-        <Footer />
-      </body>
+      </div>
+      <Footer />
     </>
   );
 }

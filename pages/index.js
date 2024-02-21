@@ -8,6 +8,7 @@ import { GET_ALL_POSTS_ID, GET_POSTS } from "@/lib/queries";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import homeStyle from '../styles/Home.module.css';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,65 +37,77 @@ export default function Home({ initialPosts, totalPages, postDatabaseIDs }) {
 
     fetchPosts();
     setCurrentPage(router.query.page || 1);
+    console.log(currentPage);
   }, [router.query.page]);
   return (
     <>
-      <div className="ast-row">
-        {posts.nodes.map(post => (
-          <article key={post.id} className={`post-51 post type-post status-publish format-standard has-post-thumbnail hentry category-6-1 category-block ast-grid-common-col ast-full-width ast-article-post remove-featured-img-padding ${has_thumbnail(post)}`}>
-            <div className="ast-post-format- blog-layout-4 ast-article-inner">
-              <div className="post-content ast-grid-common-col">
-                <div className="ast-blog-featured-section post-thumb ast-blog-single-element">
-                  <React.Fragment>
-                    {post.featuredImage && (
-                      <div className="post-thumb-img-content post-thumb">
-                        <Link href={'/post' + post.uri}>
-                          <Image src={post.featuredImage.node.mediaDetails.sizes[1].sourceUrl} height={post.featuredImage.node.mediaDetails.sizes[1].height} width={post.featuredImage.node.mediaDetails.sizes[1].width} className="attachment-large size-large wp-post-image" sizes="(max-width: 1024px) 100vw, 1024px" />
-                        </Link>
+      <main id="main" className="site-main">
+        <div className="ast-row">
+          {posts.nodes.map(post => (
+            <article key={post.id} className={`post-51 post type-post status-publish format-standard has-post-thumbnail hentry category-6-1 category-block ast-grid-common-col ast-full-width ast-article-post remove-featured-img-padding ${has_thumbnail(post)}`}>
+              <div className="ast-post-format- blog-layout-4 ast-article-inner">
+                <div className="post-content ast-grid-common-col">
+                  <div className="ast-blog-featured-section post-thumb ast-blog-single-element">
+                    <React.Fragment>
+                      {post.featuredImage && (
+                        <div className="post-thumb-img-content post-thumb">
+                          <Link href={'/post' + post.uri}>
+                            <Image src={post.featuredImage.node.mediaDetails.sizes[1].sourceUrl} height={post.featuredImage.node.mediaDetails.sizes[1].height} width={post.featuredImage.node.mediaDetails.sizes[1].width} className="attachment-large size-large wp-post-image" sizes="(max-width: 1024px) 100vw, 1024px" />
+                          </Link>
+                        </div>
+                      )}
+                    </React.Fragment>
+                    <span className="ast-blog-single-element ast-taxonomy-container cat-links default">
+                      {post?.categories?.nodes?.map(category => (
+                        <Link href={'/post' + category.uri} key={category.id} rel="category tag">{category.name}</Link>
+                      ))}
+                    </span>
+                    <h2 className="entry-title ast-blog-single-element" itemProp="headline">
+                      <Link href={'/post' + post.uri} rel="bookmark">{post.title}</Link>
+                    </h2>
+                    <header className="entry-header ast-blog-single-element ast-blog-meta-container">
+                      <div className="entry-meta">
+                        <span className="posted-by vcard author" itemType="https://schema.org/Person" itemScope="itemscope" itemProp="author">
+                          <Link title="View all posts by admin" href={'/post' + post?.author?.node?.uri} className="url fn n">
+                            <span className="author-name">{post?.author?.node?.name} </span>
+                          </Link>
+                        </span>
+                        <span>/</span>
+                        <span className="posted-on">
+                          <span className="published">{post.date}</span>
+                        </span>
                       </div>
-                    )}
-                  </React.Fragment>
-                  <span className="ast-blog-single-element ast-taxonomy-container cat-links default">
-                    {post?.categories?.nodes?.map(category => (
-                      <Link href={'/post' + category.uri} key={category.id} rel="category tag">{category.name}</Link>
-                    ))}
-                  </span>
-                  <h2 className="entry-title ast-blog-single-element" itemProp="headline">
-                    <Link href={'/post' + post.uri} rel="bookmark">{post.title}</Link>
-                  </h2>
-                  <header className="entry-header ast-blog-single-element ast-blog-meta-container">
-                    <div className="entry-meta">
-                      <span className="posted-by vcard author" itemType="https://schema.org/Person" itemScope="itemscope" itemProp="author">
-                        <Link title="View all posts by admin" href={'/post' + post?.author?.node?.uri} className="url fn n">
-                          <span className="author-name">{post?.author?.node?.name} </span>
-                        </Link>
-                      </span>
-                      <span>/</span>
-                      <span className="posted-on">
-                        <span className="published">{post.date}</span>
-                      </span>
+                    </header>
+                    <div className="ast-excerpt-container ast-blog-single-element">
+                      <div dangerouslySetInnerHTML={{ __html: post.excerpt }} />
                     </div>
-                  </header>
-                  <div className="ast-excerpt-container ast-blog-single-element">
-                    <div dangerouslySetInnerHTML={{ __html: post.excerpt }} />
+                    <div className="entry-content clear"></div>
                   </div>
-                  <div className="entry-content clear"></div>
                 </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
+      </main>
+      <div className={homeStyle.ast_pagination}>
+        <nav className="navigation pagination" role="navigation" aria-label="Post pagination">
+          <span className="screen-reader-text">Post pagination</span>
+          <div className="nav-links">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Link
+                key={i}
+                href={{ pathname: "/", query: { page: i + 1 } }}
+                onClick={(event) => {
+                  setCurrentPage(i + 1);
+                }}
+                className={`${homeStyle.page_numbers} ${i + 1 === currentPage ? homeStyle.current : ''}`}
+              >
+                {i + 1}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </div>
-      {Array.from({ length: totalPages }, (_, i) => (
-        <Link
-          key={i}
-          href={{ pathname: "/", query: { page: i + 1 } }}
-          onClick={() => setCurrentPage(i + 1)}
-          className={i + 1 === currentPage ? "active" : ""}
-        >
-          {i + 1}
-        </Link>
-      ))}
     </>
   );
 }

@@ -1,41 +1,50 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const DynamicStyleTag = ({ styles }) => {
-    useEffect(() => {
-        // Iterate over styles array and add each style to the document head
-        styles.forEach(style => {
-            // For external stylesheets
-            if (style.src) {
-                const linkElement = document.createElement('link');
-                linkElement.rel = 'stylesheet';
-                linkElement.href = style.src;
-                document.head.appendChild(linkElement);
-            }
+  const prevStylesRef = useRef([]);
 
-            // For internal styles
-            if (style.after) {
-                const styleElement = document.createElement('style');
-                styleElement.innerHTML = style.after;
-                document.head.appendChild(styleElement);
-            }
-        });
+  useEffect(() => {
+    // Compare current styles with previous styles
+    const stylesChanged = JSON.stringify(styles) !== JSON.stringify(prevStylesRef.current);
 
-        // Cleanup function to remove added elements when component unmounts
-        return () => {
-            styles.forEach(style => {
-                if (style.src) {
-                    const linkElement = document.querySelector(`link[href="${style.src}"]`);
-                    linkElement && document.head.removeChild(linkElement);
-                }
-                if (style.after) {
-                    const styleElement = document.querySelector(`style[data-id="${style.id}"]`);
-                    styleElement && document.head.removeChild(styleElement);
-                }
-            });
-        };
-    }, [styles]); // Re-run the effect if styles array changes
+    // If styles have changed, add or remove styles
+    if (stylesChanged) {
+      console.log(styles);
+      // Remove previous styles
+      prevStylesRef.current.forEach(style => {
+        if (style.src) {
+          const linkElement = document.querySelector(`link[href="${style.src}"]`);
+          linkElement && document.head.removeChild(linkElement);
+        }
+        if (style.after) {
+          const styleElement = document.querySelector(`style[data-id="${style.id}"]`);
+          styleElement && document.head.removeChild(styleElement);
+        }
+      });
 
-    return null;
+      // Add new styles
+      styles.forEach(style => {
+        if (style.src) {
+          const linkElement = document.createElement('link');
+          linkElement.rel = 'stylesheet';
+          linkElement.href = style.src;
+          document.head.appendChild(linkElement);
+        }
+        if (style.after) {
+          console.log(style.after);
+          const styleElement = document.createElement('style');
+          styleElement.innerHTML = style.after;
+          styleElement.dataset.id = style.id; // Set a unique identifier
+          document.head.appendChild(styleElement);
+        }
+      });
+
+      // Update previous styles
+      prevStylesRef.current = styles;
+    }
+  }, [styles]);
+
+  return null;
 };
 
 export default DynamicStyleTag;
